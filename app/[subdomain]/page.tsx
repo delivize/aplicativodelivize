@@ -58,5 +58,5 @@ export default async function ClientPage({ params }: ClientPageProps) {
 }
 
 export const metadata: Metadata = {
-  title: "Teste",
+  title: "Oi",
 };
