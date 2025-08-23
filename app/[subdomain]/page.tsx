@@ -4,11 +4,32 @@ import Image from "next/image";
 import type { Metadata } from "next";
 
 interface ClientPageProps {
-  params: Promise<{ subdomain: string }>;
+  params: { subdomain: string };
+}
+
+// 🔹 Gera o título dinamicamente
+export async function generateMetadata({
+  params,
+}: ClientPageProps): Promise<Metadata> {
+  const supabase = await createClient();
+  const { data: client } = await supabase
+    .from("clients")
+    .select("name")
+    .eq("subdomain", params.subdomain)
+    .single();
+
+  if (!client) {
+    return { title: "Cliente não encontrado" };
+  }
+
+  return {
+    title: client.name,
+    description: `Página personalizada de ${client.name}`,
+  };
 }
 
 export default async function ClientPage({ params }: ClientPageProps) {
-  const { subdomain } = await params;
+  const { subdomain } = params;
   const supabase = await createClient();
 
   const { data: client } = await supabase
@@ -56,7 +77,3 @@ export default async function ClientPage({ params }: ClientPageProps) {
     </div>
   );
 }
-
-export const metadata: Metadata = {
-  title: "Oi",
-};
