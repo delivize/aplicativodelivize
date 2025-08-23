@@ -15,7 +15,6 @@ export async function generateMetadata({
   const { data: client } = await supabase
     .from("clients")
     .select("name")
-    .select("photo_url")
     .eq("subdomain", params.subdomain)
     .single();
 
@@ -26,9 +25,6 @@ export async function generateMetadata({
   return {
     title: client.name,
     description: `Página personalizada de ${client.name}`,
-    icons: {
-      icon: client.photo_url || "/placeholder.svg",
-    },
   };
 }
 
