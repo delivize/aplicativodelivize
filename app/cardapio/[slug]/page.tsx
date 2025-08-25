@@ -1,7 +1,26 @@
 import { createClient } from "@/lib/server";
+import { revalidatePath } from "next/cache";
 
 interface ClientManageProps {
   params: { slug: string };
+}
+
+// 🔹 Action no servidor
+async function updateClient(formData: FormData, slug: string) {
+  "use server";
+
+  const supabase = await createClient();
+
+  const name = formData.get("name") as string;
+  const photo_url = formData.get("photo_url") as string;
+
+  await supabase
+    .from("clients")
+    .update({ name, photo_url })
+    .eq("subdomain", slug);
+
+  // revalida a página após salvar
+  revalidatePath(`/cliente/${slug}`);
 }
 
 export default async function ClientManagePage({ params }: ClientManageProps) {
@@ -22,11 +41,16 @@ export default async function ClientManagePage({ params }: ClientManageProps) {
         Gerenciar cliente: {client.name}
       </h1>
 
-      <form className="flex flex-col gap-4 max-w-sm">
+      {/* 🔹 Form já chama a Server Action */}
+      <form
+        action={(formData) => updateClient(formData, params.slug)}
+        className="flex flex-col gap-4 max-w-sm"
+      >
         <label className="flex flex-col">
           Nome:
           <input
             type="text"
+            name="name"
             defaultValue={client.name}
             className="border p-2 rounded"
           />
@@ -36,6 +60,7 @@ export default async function ClientManagePage({ params }: ClientManageProps) {
           Foto:
           <input
             type="text"
+            name="photo_url"
             defaultValue={client.photo_url || ""}
             className="border p-2 rounded"
           />
