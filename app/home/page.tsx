@@ -16,7 +16,7 @@ interface Client {
 }
 
 export const metadata: Metadata = {
-  title: "Delivize | Home",
+  title: "Delivize | Homee",
 };
 
 export default function DashboardPage() {
