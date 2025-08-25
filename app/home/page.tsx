@@ -6,7 +6,6 @@ import { createClient } from "@/lib/client";
 import { ClientForm } from "@/components/client-form";
 import { ClientList } from "@/components/client-list";
 import { Button } from "@/components/ui/button";
-import type { Metadata } from "next";
 interface Client {
   id: string;
   name: string;
@@ -14,10 +13,6 @@ interface Client {
   subdomain: string;
   created_at: string;
 }
-
-export const metadata: Metadata = {
-  title: "Delivize | Homee",
-};
 
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
