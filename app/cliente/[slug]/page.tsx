@@ -1,93 +1,101 @@
-"use client"; // componente client
+"use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/client"; // client-side supabase
+import { createClient } from "@/lib/client"; // versão client-side
+import Image from "next/image";
 
-interface ClientManageProps {
-  slug: string;
-  initialName: string;
-  initialPhotoUrl: string | null;
+interface Props {
+  params: { slug: string };
 }
 
-export default function ClientManagePage({
-  slug,
-  initialName,
-  initialPhotoUrl,
-}: ClientManageProps) {
-  const [name, setName] = useState(initialName);
-  const [photoUrl, setPhotoUrl] = useState(initialPhotoUrl || "");
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+export default function EditClientPage({ params }: Props) {
   const router = useRouter();
-
   const supabase = createClient();
+  const [loading, setLoading] = useState(true);
+  const [client, setClient] = useState({
+    name: "",
+    photo_url: "",
+  });
+
+  useEffect(() => {
+    const fetchClient = async () => {
+      const { data, error } = await supabase
+        .from("clients")
+        .select("name, photo_url")
+        .eq("subdomain", params.slug)
+        .single();
+
+      if (data) setClient(data);
+      setLoading(false);
+    };
+
+    fetchClient();
+  }, [params.slug]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setClient({ ...client, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setMessage(null);
-
     const { error } = await supabase
       .from("clients")
-      .update({ name, photo_url: photoUrl })
-      .eq("subdomain", slug);
+      .update(client)
+      .eq("subdomain", params.slug);
 
-    if (error) {
-      setMessage(`Erro ao atualizar cliente: ${error.message}`);
+    if (!error) {
+      alert("Dados atualizados com sucesso!");
+      router.refresh();
     } else {
-      setMessage("Cliente atualizado com sucesso!");
-      router.refresh(); // atualiza a página sem reload
+      alert("Erro ao atualizar.");
     }
-
-    setLoading(false);
   };
 
+  if (loading) return <p>Carregando...</p>;
+
   return (
-    <div className="p-6 max-w-lg mx-auto">
-      <h1 className="text-2xl font-bold mb-6">
-        Gerenciar cliente: {initialName}
-      </h1>
-
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <label className="flex flex-col">
-          Nome:
+    <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-md">
+      <h1 className="text-2xl font-bold mb-4">Editar Cliente</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block font-medium">Nome</label>
           <input
             type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="border p-2 rounded"
-            required
+            name="name"
+            value={client.name}
+            onChange={handleChange}
+            className="w-full border rounded px-3 py-2"
           />
-        </label>
+        </div>
 
-        <label className="flex flex-col">
-          Foto (URL):
+        <div>
+          <label className="block font-medium">URL da Foto</label>
           <input
             type="text"
-            value={photoUrl}
-            onChange={(e) => setPhotoUrl(e.target.value)}
-            className="border p-2 rounded"
+            name="photo_url"
+            value={client.photo_url}
+            onChange={handleChange}
+            className="w-full border rounded px-3 py-2"
           />
-        </label>
+        </div>
+
+        {client.photo_url && (
+          <Image
+            src={client.photo_url}
+            alt="Preview"
+            width={100}
+            height={100}
+            className="rounded-full mx-auto"
+          />
+        )}
 
         <button
           type="submit"
-          disabled={loading}
-          className="bg-amber-600 text-white py-2 rounded hover:bg-amber-700 transition disabled:opacity-50"
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
-          {loading ? "Salvando..." : "Salvar alterações"}
+          Salvar
         </button>
-
-        {message && (
-          <p
-            className={`mt-2 ${
-              message.includes("Erro") ? "text-red-500" : "text-green-600"
-            }`}
-          >
-            {message}
-          </p>
-        )}
       </form>
     </div>
   );
