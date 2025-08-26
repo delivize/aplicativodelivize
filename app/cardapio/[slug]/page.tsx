@@ -22,7 +22,7 @@ export default function EditClientPage({ params }: Props) {
   useEffect(() => {
     const fetchClient = async () => {
       const { data } = await supabase
-        .from("clients")
+        .from("cardapios")
         .select("name, photo_url")
         .eq("subdomain", params.slug)
         .single();
@@ -69,7 +69,7 @@ export default function EditClientPage({ params }: Props) {
     }
 
     const { error } = await supabase
-      .from("clients")
+      .from("cardapios")
       .update({ ...client, photo_url: photoUrl })
       .eq("subdomain", params.slug);
 

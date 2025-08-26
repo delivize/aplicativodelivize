@@ -1,86 +1,91 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import Image from "next/image"
-import { useEffect, useState } from "react"
-import { createClient } from "@/lib/client"
-import { Trash2 } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/client";
+import { Trash2 } from "lucide-react";
 
 interface Client {
-  id: string
-  name: string
-  photo_url: string | null
-  subdomain: string
-  created_at: string
+  id: string;
+  name: string;
+  photo_url: string | null;
+  subdomain: string;
+  created_at: string;
 }
 
 interface ClientListProps {
-  clients: Client[]
-  onClientDeleted: () => void // Added callback to refresh list after deletion
+  cardapios: Client[];
+  onClientDeleted: () => void; // Added callback to refresh list after deletion
 }
 
-export function ClientList({ clients, onClientDeleted }: ClientListProps) {
-  const [domain, setDomain] = useState("felipeecamila.store")
-  const [deletingId, setDeletingId] = useState<string | null>(null) // Track which client is being deleted
+export function ClientList({ cardapios, onClientDeleted }: ClientListProps) {
+  const [domain, setDomain] = useState("felipeecamila.store");
+  const [deletingId, setDeletingId] = useState<string | null>(null); // Track which client is being deleted
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const hostname = window.location.hostname
+      const hostname = window.location.hostname;
       if (hostname.includes("felipeecamila.store")) {
-        setDomain("felipeecamila.store")
+        setDomain("felipeecamila.store");
       } else if (hostname !== "localhost") {
         // Se não for localhost, usar o hostname atual removendo subdomínios
-        const parts = hostname.split(".")
+        const parts = hostname.split(".");
         if (parts.length > 2) {
-          setDomain(parts.slice(-2).join("."))
+          setDomain(parts.slice(-2).join("."));
         } else {
-          setDomain(hostname)
+          setDomain(hostname);
         }
       }
     }
-  }, [])
+  }, []);
 
   const handleDeleteClient = async (clientId: string, clientName: string) => {
     if (!confirm(`Tem certeza que deseja remover o cliente "${clientName}"?`)) {
-      return
+      return;
     }
 
-    setDeletingId(clientId)
+    setDeletingId(clientId);
 
     try {
-      const supabase = createClient()
+      const supabase = createClient();
 
-      const { error } = await supabase.from("clients").delete().eq("id", clientId)
+      const { error } = await supabase
+        .from("clients")
+        .delete()
+        .eq("id", clientId);
 
       if (error) {
-        console.error("Erro ao deletar cliente:", error)
-        alert("Erro ao remover cliente. Tente novamente.")
-        return
+        console.error("Erro ao deletar cliente:", error);
+        alert("Erro ao remover cliente. Tente novamente.");
+        return;
       }
 
-      onClientDeleted() // Refresh the list
+      onClientDeleted(); // Refresh the list
     } catch (error) {
-      console.error("Erro ao deletar cliente:", error)
-      alert("Erro ao remover cliente. Tente novamente.")
+      console.error("Erro ao deletar cliente:", error);
+      alert("Erro ao remover cliente. Tente novamente.");
     } finally {
-      setDeletingId(null)
+      setDeletingId(null);
     }
-  }
+  };
 
-  if (clients.length === 0) {
+  if (cardapios.length === 0) {
     return (
       <Card>
         <CardContent className="p-6">
-          <p className="text-muted-foreground text-center">Nenhum cliente cadastrado ainda.</p>
+          <p className="text-muted-foreground text-center">
+            Nenhum cliente cadastrado ainda.
+          </p>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
     <div className="space-y-4">
-      {clients.map((client) => (
+      {cardapios.map((client) => (
         <Card key={client.id}>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
@@ -128,5 +133,5 @@ export function ClientList({ clients, onClientDeleted }: ClientListProps) {
         </Card>
       ))}
     </div>
-  )
+  );
 }

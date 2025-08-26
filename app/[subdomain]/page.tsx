@@ -13,7 +13,7 @@ export async function generateMetadata({
 }: ClientPageProps): Promise<Metadata> {
   const supabase = await createClient();
   const { data: client } = await supabase
-    .from("clients")
+    .from("cardapios")
     .select("name, photo_url")
     .eq("subdomain", params.subdomain)
     .single();
@@ -36,7 +36,7 @@ export default async function ClientPage({ params }: ClientPageProps) {
   const supabase = await createClient();
 
   const { data: client } = await supabase
-    .from("clients")
+    .from("cardapios")
     .select("*")
     .eq("subdomain", subdomain)
     .single();

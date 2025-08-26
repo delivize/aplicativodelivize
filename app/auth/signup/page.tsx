@@ -1,62 +1,68 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { createClient } from "@/lib/client"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { createClient } from "@/lib/client";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function SignUpPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const supabase = createClient()
-    setIsLoading(true)
-    setError(null)
+    e.preventDefault();
+    const supabase = createClient();
+    setIsLoading(true);
+    setError(null);
 
     if (password !== confirmPassword) {
-      setError("As senhas não coincidem")
-      setIsLoading(false)
-      return
+      setError("As senhas não coincidem");
+      setIsLoading(false);
+      return;
     }
 
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-      })
+      });
 
-      if (error) throw error
+      if (error) throw error;
 
       // Se o usuário foi criado com sucesso, fazer login automático
       if (data.user) {
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
-        })
+        });
 
-        if (signInError) throw signInError
+        if (signInError) throw signInError;
 
         // Redirecionar diretamente para o dashboard
-        router.push("/dashboard")
+        router.push("/dashboard");
       }
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Erro ao criar conta")
+      setError(error instanceof Error ? error.message : "Erro ao criar conta");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center p-6">
@@ -64,7 +70,9 @@ export default function SignUpPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl">Cadastro</CardTitle>
-            <CardDescription>Crie sua conta para gerenciar seus clientes</CardDescription>
+            <CardDescription>
+              Crie sua conta para gerenciar seus clientes
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSignUp}>
@@ -107,7 +115,10 @@ export default function SignUpPage() {
               </div>
               <div className="mt-4 text-center text-sm">
                 Já tem uma conta?{" "}
-                <Link href="/auth/login" className="underline underline-offset-4">
+                <Link
+                  href="/auth/login"
+                  className="underline underline-offset-4"
+                >
                   Faça login
                 </Link>
               </div>
@@ -116,5 +127,5 @@ export default function SignUpPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
