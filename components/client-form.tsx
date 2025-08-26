@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/client";
@@ -10,20 +9,46 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export function ClientForm() {
+interface ClientFormProps {
+  onClientAdded?: (cardapio: {
+    name: string;
+    photo_url: string | null;
+    subdomain: string;
+    user_id: string;
+  }) => void;
+}
+
+export function ClientForm({ onClientAdded }: ClientFormProps) {
   const [name, setName] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const generateSubdomain = (name: string) => {
-    return name
+  const generateSubdomain = (name: string) =>
+    name
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-z0-9]/g, "")
       .substring(0, 20);
+
+  const uploadPhoto = async (photo: File): Promise<string | null> => {
+    const supabase = createClient();
+    const fileExt = photo.name.split(".").pop();
+    const fileName = `${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("client-photos")
+      .upload(fileName, photo);
+
+    if (uploadError) throw uploadError;
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("client-photos").getPublicUrl(fileName);
+
+    return publicUrl;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,47 +68,24 @@ export function ClientForm() {
     }
 
     try {
-      let photoUrl = null;
+      const photoUrl = photo ? await uploadPhoto(photo) : null;
 
-      // Upload da foto se fornecida
-      if (photo) {
-        const fileExt = photo.name.split(".").pop();
-        const fileName = `${Date.now()}.${fileExt}`;
-
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from("client-photos")
-          .upload(fileName, photo);
-
-        if (uploadError) throw uploadError;
-
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from("client-photos").getPublicUrl(fileName);
-
-        photoUrl = publicUrl;
-      }
-
-      // Gerar subdomínio único
       const baseSubdomain = generateSubdomain(name);
+      const { data: existingSubdomains } = await supabase
+        .from("cardapios")
+        .select("subdomain")
+        .ilike("subdomain", `${baseSubdomain}%`);
+
+      const existingSet = new Set(existingSubdomains?.map((c) => c.subdomain));
       let subdomain = baseSubdomain;
       let counter = 1;
 
-      // Verificar se o subdomínio já existe
-      while (true) {
-        const { data: existing } = await supabase
-          .from("cardapios")
-          .select("id")
-          .eq("subdomain", subdomain)
-          .single();
-
-        if (!existing) break;
-
+      while (existingSet.has(subdomain)) {
         subdomain = `${baseSubdomain}${counter}`;
         counter++;
       }
 
-      // Inserir cliente
-      const { error: insertError } = await supabase.from("clients").insert({
+      const { error: insertError } = await supabase.from("cardapios").insert({
         name,
         photo_url: photoUrl,
         subdomain,
@@ -92,12 +94,21 @@ export function ClientForm() {
 
       if (insertError) throw insertError;
 
+      onClientAdded?.({
+        name,
+        photo_url: photoUrl,
+        subdomain,
+        user_id: user.id,
+      });
+
       setName("");
       setPhoto(null);
-      router.refresh();
+      // router.refresh(); // Removido para evitar reload desnecessário
     } catch (error: unknown) {
       setError(
-        error instanceof Error ? error.message : "Erro ao cadastrar cliente"
+        error instanceof Error
+          ? error.message
+          : "Erro desconhecido ao criar cardápio"
       );
     } finally {
       setIsLoading(false);
@@ -107,12 +118,12 @@ export function ClientForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Novo Cliente</CardTitle>
+        <CardTitle>Novo Cardápio</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="name">Nome do Cliente</Label>
+            <Label htmlFor="name">Nome do Cardápio</Label>
             <Input
               id="name"
               type="text"
@@ -120,23 +131,30 @@ export function ClientForm() {
               onChange={(e) => setName(e.target.value)}
               placeholder="Digite o nome do cliente"
               required
+              aria-label="Nome do Cardápio"
             />
           </div>
 
           <div>
-            <Label htmlFor="photo">Foto do Cliente</Label>
+            <Label htmlFor="photo">Foto do Cardápio</Label>
             <Input
               id="photo"
               type="file"
               accept="image/*"
               onChange={(e) => setPhoto(e.target.files?.[0] || null)}
+              aria-label="Foto do Cardápio"
             />
           </div>
 
           {error && <p className="text-sm text-red-500">{error}</p>}
 
-          <Button type="submit" disabled={isLoading} className="w-full">
-            {isLoading ? "Cadastrando..." : "Cadastrar Cliente"}
+          <Button
+            type="submit"
+            disabled={isLoading}
+            className="w-full"
+            aria-label="Criar Cardápio"
+          >
+            {isLoading ? "Criando..." : "Criar Cardápio"}
           </Button>
         </form>
       </CardContent>
