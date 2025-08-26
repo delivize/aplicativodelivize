@@ -129,7 +129,7 @@ export function ClientForm({ onClientAdded }: ClientFormProps) {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Digite o nome do cliente"
+              placeholder="Digite o nome do cardápio"
               required
               aria-label="Nome do Cardápio"
             />
