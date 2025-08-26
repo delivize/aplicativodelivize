@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/client"; // versão client-side
+import { createClient } from "@/lib/client";
 import Image from "next/image";
 
 interface Props {
@@ -17,10 +17,11 @@ export default function EditClientPage({ params }: Props) {
     name: "",
     photo_url: "",
   });
+  const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
     const fetchClient = async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("clients")
         .select("name, photo_url")
         .eq("subdomain", params.slug)
@@ -33,15 +34,43 @@ export default function EditClientPage({ params }: Props) {
     fetchClient();
   }, [params.slug]);
 
+  useEffect(() => {
+    if (client.name) {
+      document.title = `Delivize | ${client.name}`;
+    }
+  }, [client.name]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setClient({ ...client, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    let photoUrl = client.photo_url;
+
+    if (file) {
+      const ext = file.name.split(".").pop();
+      const fileName = `${params.slug}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("client-photos")
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) {
+        alert("Erro ao fazer upload da imagem.");
+        return;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("client-photos")
+        .getPublicUrl(fileName);
+
+      photoUrl = urlData.publicUrl;
+    }
+
     const { error } = await supabase
       .from("clients")
-      .update(client)
+      .update({ ...client, photo_url: photoUrl })
       .eq("subdomain", params.slug);
 
     if (!error) {
@@ -70,12 +99,11 @@ export default function EditClientPage({ params }: Props) {
         </div>
 
         <div>
-          <label className="block font-medium">URL da Foto</label>
+          <label className="block font-medium">Foto</label>
           <input
-            type="text"
-            name="photo_url"
-            value={client.photo_url}
-            onChange={handleChange}
+            type="file"
+            accept="image/*"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
             className="w-full border rounded px-3 py-2"
           />
         </div>
