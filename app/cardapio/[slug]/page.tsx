@@ -21,11 +21,15 @@ export default function EditClientPage({ params }: Props) {
 
   useEffect(() => {
     const fetchClient = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("cardapios")
         .select("name, photo_url")
         .eq("subdomain", params.slug)
         .single();
+
+      if (error) {
+        console.error("Erro ao buscar cliente:", error.message);
+      }
 
       if (data) setClient(data);
       setLoading(false);
@@ -44,6 +48,13 @@ export default function EditClientPage({ params }: Props) {
     setClient({ ...client, [e.target.name]: e.target.value });
   };
 
+  const sanitizeFileName = (name: string) => {
+    return name
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9.]/g, "_");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -51,21 +62,39 @@ export default function EditClientPage({ params }: Props) {
 
     if (file) {
       const ext = file.name.split(".").pop();
-      const fileName = `${params.slug}.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from("client-photos")
-        .upload(fileName, file, { upsert: true });
+      const sanitized = sanitizeFileName(file.name);
+      const timestamp = Date.now();
+      const fileName = `${params.slug}_${timestamp}_${sanitized}`;
 
-      if (uploadError) {
-        alert("Erro ao fazer upload da imagem.");
+      try {
+        const { error: uploadError } = await supabase.storage
+          .from("client-photos")
+          .upload(fileName, file, {
+            upsert: true,
+            contentType: file.type,
+          });
+
+        if (uploadError) {
+          console.error("Erro no upload:", uploadError.message);
+          alert("Erro ao fazer upload da imagem.");
+          return;
+        }
+
+        const { data: urlData } = supabase.storage
+          .from("client-photos")
+          .getPublicUrl(fileName);
+
+        if (!urlData || !urlData.publicUrl) {
+          alert("Erro ao gerar URL pública da imagem.");
+          return;
+        }
+
+        photoUrl = urlData.publicUrl;
+      } catch (err: any) {
+        console.error("Exceção no upload:", err.message);
+        alert("Erro inesperado ao fazer upload da imagem.");
         return;
       }
-
-      const { data: urlData } = supabase.storage
-        .from("client-photos")
-        .getPublicUrl(fileName);
-
-      photoUrl = urlData.publicUrl;
     }
 
     const { error } = await supabase
@@ -77,6 +106,7 @@ export default function EditClientPage({ params }: Props) {
       alert("Dados atualizados com sucesso!");
       router.refresh();
     } else {
+      console.error("Erro ao atualizar dados:", error.message);
       alert("Erro ao atualizar.");
     }
   };
