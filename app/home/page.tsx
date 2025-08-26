@@ -16,20 +16,20 @@ interface Client {
 
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
-  const [clients, setClients] = useState<Client[]>([]);
+  const [cardapios, setCardapios] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   const supabase = createClient();
 
-  const fetchClients = async (userId: string) => {
+  const fetchCardapios = async (userId: string) => {
     const { data } = await supabase
-      .from("clients")
+      .from("cardapios")
       .select("*")
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
-    setClients(data || []);
+    setCardapios(data || []);
   };
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export default function DashboardPage() {
       }
 
       setUser(user);
-      await fetchClients(user.id);
+      await fetchCardapios(user.id);
       setLoading(false);
     };
 
@@ -53,13 +53,13 @@ export default function DashboardPage() {
 
   const handleClientDeleted = async () => {
     if (user) {
-      await fetchClients(user.id);
+      await fetchCardapios(user.id);
     }
   };
 
   const handleClientAdded = async () => {
     if (user) {
-      await fetchClients(user.id);
+      await fetchCardapios(user.id);
     }
   };
 
@@ -95,7 +95,10 @@ export default function DashboardPage() {
 
         <div>
           <h2 className="text-xl font-semibold mb-4">Cardápios Cadastrados</h2>
-          <ClientList clients={clients} onClientDeleted={handleClientDeleted} />
+          <ClientList
+            cardapios={cardapios}
+            onClientDeleted={handleClientDeleted}
+          />
         </div>
       </div>
     </div>
