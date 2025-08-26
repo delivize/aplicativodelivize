@@ -1,74 +1,93 @@
-import { createClient } from "@/lib/server";
-import { revalidatePath } from "next/cache";
+"use client"; // componente client
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/client"; // client-side supabase
 
 interface ClientManageProps {
-  params: { slug: string };
+  slug: string;
+  initialName: string;
+  initialPhotoUrl: string | null;
 }
 
-// 🔹 Action no servidor
-async function updateClient(formData: FormData, slug: string) {
-  "use server";
+export default function ClientManagePage({
+  slug,
+  initialName,
+  initialPhotoUrl,
+}: ClientManageProps) {
+  const [name, setName] = useState(initialName);
+  const [photoUrl, setPhotoUrl] = useState(initialPhotoUrl || "");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const router = useRouter();
 
-  const supabase = await createClient();
+  const supabase = createClient();
 
-  const name = formData.get("name") as string;
-  const photo_url = formData.get("photo_url") as string;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage(null);
 
-  await supabase
-    .from("clients")
-    .update({ name, photo_url })
-    .eq("subdomain", slug);
+    const { error } = await supabase
+      .from("clients")
+      .update({ name, photo_url: photoUrl })
+      .eq("subdomain", slug);
 
-  // revalida a página após salvar
-  revalidatePath(`/cliente/${slug}`);
-}
+    if (error) {
+      setMessage(`Erro ao atualizar cliente: ${error.message}`);
+    } else {
+      setMessage("Cliente atualizado com sucesso!");
+      router.refresh(); // atualiza a página sem reload
+    }
 
-export default async function ClientManagePage({ params }: ClientManageProps) {
-  const supabase = await createClient();
-  const { data: client } = await supabase
-    .from("clients")
-    .select("name, photo_url")
-    .eq("subdomain", params.slug)
-    .single();
-
-  if (!client) {
-    return <div>Cliente não encontrado</div>;
-  }
+    setLoading(false);
+  };
 
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-bold mb-4">
-        Gerenciar cliente: {client.name}
+    <div className="p-6 max-w-lg mx-auto">
+      <h1 className="text-2xl font-bold mb-6">
+        Gerenciar cliente: {initialName}
       </h1>
 
-      {/* 🔹 Form já chama a Server Action */}
-      <form
-        action={(formData) => updateClient(formData, params.slug)}
-        className="flex flex-col gap-4 max-w-sm"
-      >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <label className="flex flex-col">
           Nome:
           <input
             type="text"
-            name="name"
-            defaultValue={client.name}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             className="border p-2 rounded"
+            required
           />
         </label>
 
         <label className="flex flex-col">
-          Foto:
+          Foto (URL):
           <input
             type="text"
-            name="photo_url"
-            defaultValue={client.photo_url || ""}
+            value={photoUrl}
+            onChange={(e) => setPhotoUrl(e.target.value)}
             className="border p-2 rounded"
           />
         </label>
 
-        <button type="submit" className="bg-blue-500 text-white py-2 rounded">
-          Salvar alterações
+        <button
+          type="submit"
+          disabled={loading}
+          className="bg-amber-600 text-white py-2 rounded hover:bg-amber-700 transition disabled:opacity-50"
+        >
+          {loading ? "Salvando..." : "Salvar alterações"}
         </button>
+
+        {message && (
+          <p
+            className={`mt-2 ${
+              message.includes("Erro") ? "text-red-500" : "text-green-600"
+            }`}
+          >
+            {message}
+          </p>
+        )}
       </form>
     </div>
   );
