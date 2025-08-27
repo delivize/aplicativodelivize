@@ -12,7 +12,6 @@ export default function Header() {
           width={158}
           height={40}
         />
-        <span className="text-2xl font-madimi text-[#059669]">delivize</span>
       </div>
       <nav className="flex gap-6">
         <Link href="#planos" className="text-[#059669] hover:underline">
