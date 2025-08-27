@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   title: "Delivize",
   description: "Crie Cardápios Que vendem!",
   icons: {
-    icon: "delivize.svg",
+    icon: "logodelivize.svg",
   },
 };
 
