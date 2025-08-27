@@ -6,7 +6,7 @@ export function Header({ onSignOut }: { onSignOut: () => void }) {
     <header className="bg-white shadow-sm py-4 px-6 flex justify-between items-center">
       <div className="flex items-center gap-3">
         <Image
-          src="logotipodelivize.svg"
+          src="/logotipodelivize.svg"
           alt="Delivize Logo"
           width={158}
           height={40}
