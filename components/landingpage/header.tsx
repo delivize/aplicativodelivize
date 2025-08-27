@@ -6,7 +6,12 @@ export default function Header() {
   return (
     <header className="flex items-center justify-between px-6 py-4 bg-white shadow-md">
       <div className="flex items-center gap-2">
-        <Image src="/logo.png" alt="Delivize Logo" width={40} height={40} />
+        <Image
+          src="/logotipodelivize.svg"
+          alt="Delivize Logo"
+          width={158}
+          height={40}
+        />
         <span className="text-2xl font-madimi text-[#059669]">delivize</span>
       </div>
       <nav className="flex gap-6">
