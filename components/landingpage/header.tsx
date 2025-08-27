@@ -21,7 +21,7 @@ export default function Header() {
           Sobre
         </Link>
         <Link
-          href="#cta"
+          href="/acesso/cadastro"
           className="bg-[#059669] text-white px-4 py-2 rounded hover:bg-[#047857] transition"
         >
           Criar Conta
