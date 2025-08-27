@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/client";
 import Image from "next/image";
+import { Header } from "@/components/ui/header"; // ajuste o caminho conforme necessário
 
 interface Props {
   params: { slug: string };
@@ -111,50 +112,60 @@ export default function EditClientPage({ params }: Props) {
     }
   };
 
+  const handleSignOut = () => {
+    // lógica de logout aqui
+    alert("Você saiu com sucesso.");
+    router.push("/login"); // ou qualquer rota de login
+  };
+
   if (loading) return <p>Carregando...</p>;
 
   return (
-    <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-md">
-      <h1 className="text-2xl font-bold mb-4">Editar Cliente</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block font-medium">Nome</label>
-          <input
-            type="text"
-            name="name"
-            value={client.name}
-            onChange={handleChange}
-            className="w-full border rounded px-3 py-2"
-          />
-        </div>
+    <div>
+      <Header onSignOut={handleSignOut} />
 
-        <div>
-          <label className="block font-medium">Foto</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-            className="w-full border rounded px-3 py-2"
-          />
-        </div>
+      <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-md">
+        <h1 className="text-2xl font-bold mb-4">Editar Cliente</h1>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block font-medium">Nome</label>
+            <input
+              type="text"
+              name="name"
+              value={client.name}
+              onChange={handleChange}
+              className="w-full border rounded px-3 py-2"
+            />
+          </div>
 
-        {client.photo_url && (
-          <Image
-            src={client.photo_url}
-            alt="Preview"
-            width={100}
-            height={100}
-            className="rounded-full mx-auto"
-          />
-        )}
+          <div>
+            <label className="block font-medium">Foto</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              className="w-full border rounded px-3 py-2"
+            />
+          </div>
 
-        <button
-          type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          Salvar
-        </button>
-      </form>
+          {client.photo_url && (
+            <Image
+              src={client.photo_url}
+              alt="Preview"
+              width={100}
+              height={100}
+              className="rounded-full mx-auto"
+            />
+          )}
+
+          <button
+            type="submit"
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Salvar
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

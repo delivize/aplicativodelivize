@@ -7,7 +7,7 @@ import { ClientForm } from "@/components/client-form";
 import { ClientList } from "@/components/client-list";
 import { Header } from "@/components/ui/header";
 import { Loader } from "@/components/ui/loader";
-
+Header;
 interface Client {
   id: string;
   name: string;
