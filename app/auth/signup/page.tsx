@@ -1,9 +1,14 @@
 "use client";
 
 import type React from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 import { createClient } from "@/lib/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -11,23 +16,26 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [businessName, setBusinessName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
+  const generateSubdomain = (name: string) =>
+    name
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]/g, "")
+      .substring(0, 20);
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    const supabase = createClient();
     setIsLoading(true);
     setError(null);
 
@@ -37,6 +45,8 @@ export default function SignUpPage() {
       return;
     }
 
+    const supabase = createClient();
+
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -45,7 +55,6 @@ export default function SignUpPage() {
 
       if (error) throw error;
 
-      // Se o usuário foi criado com sucesso, fazer login automático
       if (data.user) {
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email,
@@ -54,8 +63,31 @@ export default function SignUpPage() {
 
         if (signInError) throw signInError;
 
-        // Redirecionar diretamente para o dashboard
-        router.push("/home");
+        const subdomainBase = generateSubdomain(businessName);
+        const { data: existing } = await supabase
+          .from("cardapios")
+          .select("subdomain")
+          .ilike("subdomain", `${subdomainBase}%`);
+
+        const existingSet = new Set(existing?.map((c) => c.subdomain));
+        let subdomain = subdomainBase;
+        let counter = 1;
+
+        while (existingSet.has(subdomain)) {
+          subdomain = `${subdomainBase}${counter}`;
+          counter++;
+        }
+
+        const { error: insertError } = await supabase.from("cardapios").insert({
+          name: businessName,
+          photo_url: null,
+          subdomain,
+          user_id: data.user.id,
+        });
+
+        if (insertError) throw insertError;
+
+        router.push(`/cardapio/${subdomain}`);
       }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "Erro ao criar conta");
@@ -71,21 +103,32 @@ export default function SignUpPage() {
           <CardHeader>
             <CardTitle className="text-2xl">Cadastro</CardTitle>
             <CardDescription>
-              Crie sua conta para gerenciar seus clientes
+              Crie sua conta e comece a montar seu cardápio
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSignUp}>
               <div className="flex flex-col gap-4">
                 <div className="grid gap-2">
+                  <Label htmlFor="businessName">Nome do Negócio</Label>
+                  <Input
+                    id="businessName"
+                    type="text"
+                    required
+                    value={businessName}
+                    onChange={(e) => setBusinessName(e.target.value)}
+                    placeholder="Ex: Pizzaria do João"
+                  />
+                </div>
+                <div className="grid gap-2">
                   <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="seu@email.com"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    placeholder="seu@email.com"
                   />
                 </div>
                 <div className="grid gap-2">
