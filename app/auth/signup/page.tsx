@@ -55,7 +55,7 @@ export default function SignUpPage() {
         if (signInError) throw signInError;
 
         // Redirecionar diretamente para o dashboard
-        router.push("/dashboard");
+        router.push("/home");
       }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "Erro ao criar conta");
