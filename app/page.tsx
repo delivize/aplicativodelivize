@@ -6,10 +6,11 @@ import Planos from "@/components/landingpage/planos";
 import Sobre from "@/components/landingpage/sobre";
 import CTA from "@/components/landingpage/cta";
 import Footer from "@/components/landingpage/footer";
-import localFont from "next/font/local";
+import { Madimi_One } from "next/font/google";
 
-const madimi = localFont({
-  src: "../public/fonts/MadimiOne-Regular.ttf",
+const madimi = Madimi_One({
+  subsets: ["latin"],
+  weight: "400",
   variable: "--font-madimi",
 });
 
