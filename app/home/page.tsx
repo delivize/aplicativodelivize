@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/client";
 import { ClientForm } from "@/components/client-form";
 import { ClientList } from "@/components/client-list";
-import { Button } from "@/components/ui/button";
+import { Header } from "@/components/ui/header";
+import { Loader } from "@/components/ui/loader";
+
 interface Client {
   id: string;
   name: string;
@@ -19,7 +21,6 @@ export default function DashboardPage() {
   const [cardapios, setCardapios] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-
   const supabase = createClient();
 
   const fetchCardapios = async (userId: string) => {
@@ -37,30 +38,23 @@ export default function DashboardPage() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-
       if (!user) {
         router.push("/auth/login");
         return;
       }
-
       setUser(user);
       await fetchCardapios(user.id);
       setLoading(false);
     };
-
     checkUser();
   }, [router]);
 
   const handleClientDeleted = async () => {
-    if (user) {
-      await fetchCardapios(user.id);
-    }
+    if (user) await fetchCardapios(user.id);
   };
 
   const handleClientAdded = async () => {
-    if (user) {
-      await fetchCardapios(user.id);
-    }
+    if (user) await fetchCardapios(user.id);
   };
 
   const handleSignOut = async () => {
@@ -68,39 +62,30 @@ export default function DashboardPage() {
     router.push("/");
   };
 
-  if (loading) {
-    return (
-      <div className="container mx-auto p-6 max-w-4xl">
-        <div className="flex justify-center items-center h-64">
-          <p>Carregando...</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <Loader />;
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-amber-600">Cardápios</h1>
-        <Button variant="outline" onClick={handleSignOut}>
-          Sair
-        </Button>
-      </div>
-
-      <div className="grid gap-8 md:grid-cols-2">
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Criar Novo Cardápio</h2>
-          <ClientForm onClientAdded={handleClientAdded} />
+    <div className="min-h-screen bg-gray-50">
+      <Header onSignOut={handleSignOut} />
+      <main className="container mx-auto p-6 max-w-5xl">
+        <div className="grid gap-8 md:grid-cols-2">
+          <section>
+            <h2 className="text-xl font-semibold mb-4 text-green-700">
+              Criar Novo Cardápio
+            </h2>
+            <ClientForm onClientAdded={handleClientAdded} />
+          </section>
+          <section>
+            <h2 className="text-xl font-semibold mb-4 text-green-700">
+              Cardápios Cadastrados
+            </h2>
+            <ClientList
+              cardapios={cardapios}
+              onClientDeleted={handleClientDeleted}
+            />
+          </section>
         </div>
-
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Cardápios Cadastrados</h2>
-          <ClientList
-            cardapios={cardapios}
-            onClientDeleted={handleClientDeleted}
-          />
-        </div>
-      </div>
+      </main>
     </div>
   );
 }
