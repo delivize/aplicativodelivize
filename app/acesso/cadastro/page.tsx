@@ -159,7 +159,7 @@ export default function SignUpPage() {
               <div className="mt-4 text-center text-sm">
                 Já tem uma conta?{" "}
                 <Link
-                  href="/auth/login"
+                  href="/acesso/login"
                   className="underline underline-offset-4"
                 >
                   Faça login

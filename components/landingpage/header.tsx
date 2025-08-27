@@ -7,7 +7,7 @@ export default function Header() {
     <header className="flex items-center justify-between px-6 py-4 bg-white shadow-md">
       <div className="flex items-center gap-2">
         <Image
-          src="/logotipodelivize.svg"
+          src="/logodelivize.svg"
           alt="Delivize Logo"
           width={158}
           height={40}
