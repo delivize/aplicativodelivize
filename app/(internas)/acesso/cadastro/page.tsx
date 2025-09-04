@@ -4,6 +4,7 @@ import type React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Mail, Lock, Store } from "lucide-react";
 
 import { createClient } from "@/lib/client";
 import { Button } from "@/components/ui/button";
@@ -97,20 +98,24 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center p-6">
-      <div className="w-full max-w-sm">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Cadastro</CardTitle>
-            <CardDescription>
-              Crie sua conta e comece a montar seu cardápio
+    <div className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-[#F0FDF4] to-white p-6">
+      <div className="w-full max-w-md">
+        <Card className="shadow-lg border border-gray-200">
+          <CardHeader className="text-center">
+            <CardTitle className="text-3xl font-bold text-[#059669]">
+              Criar Conta
+            </CardTitle>
+            <CardDescription className="mt-1 text-gray-600">
+              Comece grátis e monte seu cardápio em minutos 🚀
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSignUp}>
-              <div className="flex flex-col gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="businessName">Nome do Negócio</Label>
+            <form onSubmit={handleSignUp} className="space-y-4">
+              {/* Nome do Negócio */}
+              <div className="grid gap-2">
+                <Label htmlFor="businessName">Nome do Negócio</Label>
+                <div className="relative">
+                  <Store className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
                     id="businessName"
                     type="text"
@@ -118,10 +123,16 @@ export default function SignUpPage() {
                     value={businessName}
                     onChange={(e) => setBusinessName(e.target.value)}
                     placeholder="Ex: Pizzaria do João"
+                    className="pl-10"
                   />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
+              </div>
+
+              {/* Email */}
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
                     id="email"
                     type="email"
@@ -129,43 +140,97 @@ export default function SignUpPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="seu@email.com"
+                    className="pl-10"
                   />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="password">Senha</Label>
+              </div>
+
+              {/* Senha */}
+              <div className="grid gap-2">
+                <Label htmlFor="password">Senha</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
                     id="password"
                     type="password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10"
                   />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+              </div>
+
+              {/* Confirmar Senha */}
+              <div className="grid gap-2">
+                <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
                     id="confirmPassword"
                     type="password"
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="pl-10"
                   />
                 </div>
-                {error && <p className="text-sm text-red-500">{error}</p>}
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Criando conta..." : "Criar conta"}
-                </Button>
               </div>
-              <div className="mt-4 text-center text-sm">
-                Já tem uma conta?{" "}
-                <Link
-                  href="/acesso/login"
-                  className="underline underline-offset-4"
-                >
-                  Faça login
-                </Link>
+
+              {/* Error */}
+              {error && (
+                <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-md">
+                  {error}
+                </p>
+              )}
+
+              {/* Botão principal */}
+              <Button
+                type="submit"
+                className="w-full bg-[#059669] hover:bg-[#047857] transition"
+                disabled={isLoading}
+              >
+                {isLoading ? "Criando conta..." : "Criar conta grátis"}
+              </Button>
+
+              {/* Separador */}
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-gray-500">ou</span>
+                </div>
               </div>
+
+              {/* Google Button (mock, se quiser integrar depois) */}
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full flex items-center gap-2"
+              >
+                <img
+                  src="https://www.svgrepo.com/show/475656/google-color.svg"
+                  alt="Google"
+                  className="h-5 w-5"
+                />
+                Entrar com Google
+              </Button>
+
+              <p className="mt-4 text-xs text-center text-gray-500">
+                Sem cartão de crédito • Cancelamento fácil
+              </p>
             </form>
+
+            <div className="mt-6 text-center text-sm">
+              Já tem uma conta?{" "}
+              <Link
+                href="/acesso/login"
+                className="font-medium text-[#059669] hover:underline"
+              >
+                Faça login
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </div>

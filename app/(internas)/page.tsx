@@ -28,8 +28,8 @@ export default function Home() {
       <Header />
       <main>
         <Hero />
-        <Planos />
         <Sobre />
+        <Planos />
         <CTA />
       </main>
       <Footer />
