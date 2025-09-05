@@ -15,7 +15,7 @@ import {
   Ticket, // 👈 ícone para Cupons
   Bike, // 👈 ícone para Entregadores
   Star, // 👈 ícone para Avaliações
-  CreditCard, // 👈 ícone para Formas de Pagamento
+  CreditCard, // 👈 ícone para Formas de Pagamentoo
   Printer, // 👈 ícone para Impressoras
 } from "lucide-react";
 import { useEffect, useState } from "react";
