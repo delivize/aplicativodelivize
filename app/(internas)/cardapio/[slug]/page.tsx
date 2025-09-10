@@ -5,7 +5,7 @@ import { createClient } from "@/lib/client";
 import Menu from "@/components/gerenciamento/menu";
 import Header from "@/components/gerenciamento/header";
 import ConfiguracoesView from "@/components/gerenciamento/design";
-import ContaView from "@/components/gerenciamento/contaView";
+import ContaView from "@/components/gerenciamento/minhaConta";
 import OperatingHoursManager from "@/components/gerenciamento/operatingHoursManager";
 import CategoriasManager from "@/components/gerenciamento/categorias";
 import UploadsManager from "@/components/gerenciamento/uploads";
@@ -167,7 +167,7 @@ export default function CardapioPage({
     <div className="flex h-screen bg-gray-50">
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}

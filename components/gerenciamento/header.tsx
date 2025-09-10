@@ -30,6 +30,7 @@ export default function Header({
   const [copied, setCopied] = useState(false);
   const [isOpen, setIsOpen] = useState<boolean | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
 
   const supabase = createClient();
 
@@ -37,6 +38,55 @@ export default function Header({
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Função para calcular dias restantes do teste
+  const calculateTrialDaysLeft = useCallback(async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setTrialDaysLeft(null);
+        return;
+      }
+
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("trial_start_date, is_premium")
+        .eq("id", user.id)
+        .single();
+
+      if (error || !profile) {
+        console.error("Erro ao buscar perfil:", error);
+        setTrialDaysLeft(null);
+        return;
+      }
+
+      // Se já é premium, não mostra o contador
+      if (profile.is_premium) {
+        setTrialDaysLeft(null);
+        return;
+      }
+
+      // Se não tem data de início do teste, usar a data de criação do usuário
+      const trialStartDate = profile.trial_start_date
+        ? new Date(profile.trial_start_date)
+        : new Date(user.created_at);
+
+      const now = new Date();
+      const trialEndDate = new Date(trialStartDate);
+      trialEndDate.setDate(trialEndDate.getDate() + 14); // 14 dias de teste
+
+      const diffTime = trialEndDate.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      setTrialDaysLeft(Math.max(0, diffDays));
+    } catch (error) {
+      console.error("Erro ao calcular dias do teste:", error);
+      setTrialDaysLeft(null);
+    }
+  }, [supabase]);
 
   // Função para verificar se está aberto - usando useCallback para estabilizar a referência
   const checkIfOpen = useCallback(async () => {
@@ -112,17 +162,22 @@ export default function Header({
   }, [cardapioId, supabase]);
 
   useEffect(() => {
-    // Só executa se temos um cardapioId e estamos no cliente
-    if (cardapioId && isClient) {
-      checkIfOpen();
-      // Atualiza a cada 30 segundos para refletir mudanças mais rapidamente
-      const interval = setInterval(checkIfOpen, 30 * 1000);
-      return () => clearInterval(interval);
-    } else if (!cardapioId) {
-      console.warn("Header: cardapioId não fornecido");
-      setIsOpen(null);
+    if (isClient) {
+      // Calcular dias do teste
+      calculateTrialDaysLeft();
+
+      // Só executa se temos um cardapioId
+      if (cardapioId) {
+        checkIfOpen();
+        // Atualiza a cada 30 segundos para refletir mudanças mais rapidamente
+        const interval = setInterval(checkIfOpen, 30 * 1000);
+        return () => clearInterval(interval);
+      } else {
+        console.warn("Header: cardapioId não fornecido");
+        setIsOpen(null);
+      }
     }
-  }, [cardapioId, isClient, checkIfOpen]);
+  }, [cardapioId, isClient, checkIfOpen, calculateTrialDaysLeft]);
 
   const handleCopyLink = async () => {
     const url = `${slug}.delivize.com`;
@@ -152,6 +207,33 @@ export default function Header({
     const url = `https://${slug}.delivize.com`;
     window.open(url, "_blank", "noopener,noreferrer");
   };
+
+  const getTrialMessage = () => {
+    if (trialDaysLeft === null) return null;
+
+    if (trialDaysLeft === 0) {
+      return "Seu teste acabou!";
+    } else if (trialDaysLeft === 1) {
+      return "Seu teste termina amanhã!";
+    } else {
+      return `Seu teste termina em ${trialDaysLeft} dias!`;
+    }
+  };
+
+  const getTrialColor = () => {
+    if (trialDaysLeft === null) return "orange";
+
+    if (trialDaysLeft <= 2) {
+      return "red"; // Vermelho para urgente (0-2 dias)
+    } else if (trialDaysLeft <= 5) {
+      return "yellow"; // Amarelo para atenção (3-5 dias)
+    } else {
+      return "orange"; // Laranja para normal (6+ dias)
+    }
+  };
+
+  const trialColor = getTrialColor();
+  const trialMessage = getTrialMessage();
 
   return (
     <header className="w-full bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
@@ -232,13 +314,39 @@ export default function Header({
 
           {/* Desktop/Tablet: layout completo */}
           <div className="hidden sm:flex items-center gap-4">
-            {/* Aviso de upgrade - hidden em mobile small */}
-            <div className="hidden md:flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg px-3 lg:px-4 py-2">
-              <Crown className="w-4 h-4 text-orange-600" />
-              <span className="text-xs lg:text-sm font-medium text-orange-800">
-                Faça upgrade
-              </span>
-            </div>
+            {/* Aviso de teste/upgrade - hidden em mobile small */}
+            {trialMessage && (
+              <div
+                className={`hidden md:flex items-center gap-2 rounded-lg px-3 lg:px-4 py-2 border ${
+                  trialColor === "red"
+                    ? "bg-red-50 border-red-200"
+                    : trialColor === "yellow"
+                    ? "bg-yellow-50 border-yellow-200"
+                    : "bg-orange-50 border-orange-200"
+                }`}
+              >
+                <Crown
+                  className={`w-4 h-4 ${
+                    trialColor === "red"
+                      ? "text-red-600"
+                      : trialColor === "yellow"
+                      ? "text-yellow-600"
+                      : "text-orange-600"
+                  }`}
+                />
+                <span
+                  className={`text-xs lg:text-sm font-medium ${
+                    trialColor === "red"
+                      ? "text-red-800"
+                      : trialColor === "yellow"
+                      ? "text-yellow-800"
+                      : "text-orange-800"
+                  }`}
+                >
+                  {trialMessage}
+                </span>
+              </div>
+            )}
 
             {/* Botões Ver Cardápio e Copiar */}
             <div className="flex">

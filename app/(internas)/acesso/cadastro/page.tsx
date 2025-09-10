@@ -57,6 +57,20 @@ export default function SignUpPage() {
       if (error) throw error;
 
       if (data.user) {
+        // Data atual para início do teste gratuito
+        const trialStartDate = new Date().toISOString();
+
+        // 🔑 Salvar o profile do usuário com data de início do teste
+        const { error: profileError } = await supabase.from("profiles").insert({
+          id: data.user.id, // mesmo id do auth.users
+          nome: businessName, // nome do negócio como profile.name
+          trial_start_date: trialStartDate, // Data de início do teste gratuito
+          is_premium: false, // Por padrão, não é premium (está no teste)
+        });
+
+        if (profileError) throw profileError;
+
+        // Login automático
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -64,6 +78,7 @@ export default function SignUpPage() {
 
         if (signInError) throw signInError;
 
+        // Criar o cardápio inicial com subdomínio
         const subdomainBase = generateSubdomain(businessName);
         const { data: existing } = await supabase
           .from("cardapios")
@@ -106,7 +121,11 @@ export default function SignUpPage() {
               Criar Conta
             </CardTitle>
             <CardDescription className="mt-1 text-gray-600">
-              Comece grátis e monte seu cardápio em minutos 🚀
+              Comece grátis com{" "}
+              <span className="font-semibold text-[#059669]">
+                14 dias de teste
+              </span>{" "}
+              e monte seu cardápio em minutos 🚀
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -190,7 +209,9 @@ export default function SignUpPage() {
                 className="w-full bg-[#059669] hover:bg-[#047857] transition"
                 disabled={isLoading}
               >
-                {isLoading ? "Criando conta..." : "Criar conta grátis"}
+                {isLoading
+                  ? "Criando conta..."
+                  : "Começar teste grátis de 14 dias"}
               </Button>
 
               {/* Separador */}
@@ -203,7 +224,7 @@ export default function SignUpPage() {
                 </div>
               </div>
 
-              {/* Google Button (mock, se quiser integrar depois) */}
+              {/* Google Button (mock) */}
               <Button
                 type="button"
                 variant="outline"
@@ -218,7 +239,7 @@ export default function SignUpPage() {
               </Button>
 
               <p className="mt-4 text-xs text-center text-gray-500">
-                Sem cartão de crédito • Cancelamento fácil
+                14 dias grátis • Sem cartão de crédito • Cancelamento fácil
               </p>
             </form>
 
