@@ -1,21 +1,17 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-export async function middleware(request: NextRequest) {
-  console.log("🚀 [MIDDLEWARE] Iniciando...");
-  console.log("🌐 [MIDDLEWARE] hostname:", request.headers.get("host"));
-  console.log("📍 [MIDDLEWARE] pathname:", request.nextUrl.pathname);
-  console.log("🔗 [MIDDLEWARE] URL completa:", request.url);
-
+export async function updateSession(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.error("❌ [MIDDLEWARE] Variáveis do Supabase não configuradas");
+    console.error("[middleware] Erro: Variáveis do Supabase não configuradas");
     return NextResponse.next();
   }
 
   let supabaseResponse = NextResponse.next({ request });
+
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll: () => request.cookies.getAll(),
@@ -38,18 +34,8 @@ export async function middleware(request: NextRequest) {
     .replace("http://", "")
     .replace(/\/$/, "");
 
-  console.log("🏠 [MIDDLEWARE] mainDomain:", mainDomain);
-
-  // Pular assets estáticos
-  if (
-    request.nextUrl.pathname.startsWith("/_next/") ||
-    request.nextUrl.pathname.startsWith("/api/") ||
-    request.nextUrl.pathname.startsWith("/favicon") ||
-    request.nextUrl.pathname.includes(".")
-  ) {
-    console.log("⚡ [MIDDLEWARE] Pulando asset estático");
-    return NextResponse.next();
-  }
+  console.log("[middleware] hostname:", hostname);
+  console.log("[middleware] mainDomain:", mainDomain);
 
   // Evitar rodar lógica em dev/local/preview
   const isPreviewDomain =
@@ -57,20 +43,9 @@ export async function middleware(request: NextRequest) {
     hostname.includes("localhost") ||
     hostname === mainDomain;
 
-  console.log("🔍 [MIDDLEWARE] isPreviewDomain:", isPreviewDomain);
-
   if (!isPreviewDomain) {
     const hostParts = hostname.split(".");
     const mainParts = mainDomain.split(".");
-
-    console.log("🔧 [MIDDLEWARE] hostParts:", hostParts);
-    console.log("🔧 [MIDDLEWARE] mainParts:", mainParts);
-
-    // Se já está na rota /custom, não fazer rewrite novamente
-    if (request.nextUrl.pathname.startsWith("/custom/")) {
-      console.log("✅ [MIDDLEWARE] Já está em /custom/, seguindo...");
-      return NextResponse.next();
-    }
 
     // 🔹 Caso seja subdomínio do domínio principal
     if (hostParts.length > mainParts.length) {
@@ -80,24 +55,14 @@ export async function middleware(request: NextRequest) {
         url.pathname = `/${subdomain}${
           request.nextUrl.pathname === "/" ? "" : request.nextUrl.pathname
         }`;
-        console.log("🔄 [MIDDLEWARE] Subdomínio rewrite para:", url.pathname);
         return NextResponse.rewrite(url);
       }
     } else {
       // 🔹 Caso seja domínio personalizado → rewrite para rota "custom"
       const url = request.nextUrl.clone();
-      const originalPathname = request.nextUrl.pathname;
-
       url.pathname = `/custom/${hostname}${
-        originalPathname === "/" ? "" : originalPathname
+        request.nextUrl.pathname === "/" ? "" : request.nextUrl.pathname
       }`;
-
-      console.log(
-        "🎯 [MIDDLEWARE] Domínio personalizado rewrite para:",
-        url.pathname
-      );
-      console.log("🎯 [MIDDLEWARE] URL final:", url.toString());
-
       return NextResponse.rewrite(url);
     }
   }
@@ -106,7 +71,6 @@ export async function middleware(request: NextRequest) {
   const protectedRoutes = ["/dashboard"];
   const { data } = await supabase.auth.getUser();
   const user = data.user;
-
   const isProtectedRoute = protectedRoutes.some((route) =>
     request.nextUrl.pathname.startsWith(route)
   );
@@ -117,18 +81,5 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  console.log("✅ [MIDDLEWARE] Finalizando normalmente");
   return supabaseResponse;
 }
-
-export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-  ],
-};
