@@ -38,7 +38,7 @@ export default function SubscribeButton() {
       className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
       onClick={() => handleClick("123")}
     >
-      Fazer Upgrade Agora
+      Fazer Upgrade Agora!
     </button>
   );
 }
