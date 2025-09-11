@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/client";
 import Image from "next/image";
 import Toast from "@/components/gerenciamento/toast"; // Ajuste o caminho conforme sua estrutura
-import CardDomain from "@/components/gerenciamento/card-domain";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -361,8 +360,6 @@ export default function Design({ params, onUpdateName }: Props) {
                 )}
               </p>
             </div>
-
-            <CardDomain />
 
             {/* Botões */}
             <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
