@@ -180,7 +180,7 @@ export default function Header({
   }, [cardapioId, isClient, checkIfOpen, calculateTrialDaysLeft]);
 
   const handleCopyLink = async () => {
-    const url = `${slug}.delivize.com`;
+    const url = `${slug}.delivize.menu`;
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
@@ -204,7 +204,7 @@ export default function Header({
   };
 
   const handleViewMenu = () => {
-    const url = `https://${slug}.delivize.com`;
+    const url = `https://${slug}.delivize.menu`;
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
